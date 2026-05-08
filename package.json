@@ -1,0 +1,59 @@
+{
+  "name": "brasil-data-mcp",
+  "version": "0.1.0",
+  "description": "MCP server providing access to Brazilian public data (CNPJ, CEP, banks, holidays) via BrasilAPI. For use with Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "brasil",
+    "brazil",
+    "cnpj",
+    "cep",
+    "brasilapi",
+    "ai-tools"
+  ],
+  "author": "Alan Castriola <alanpcf87@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alanpcf/brasil-data-mcp.git"
+  },
+  "homepage": "https://github.com/alanpcf/brasil-data-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/alanpcf/brasil-data-mcp/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "brasil-data-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --shims",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
