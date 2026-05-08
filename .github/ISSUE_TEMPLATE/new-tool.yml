@@ -1,0 +1,74 @@
+name: 🛠️ Nova tool
+description: Sugerir uma tool MCP nova (FIPE, ISBN, taxas, CVM, etc)
+labels: ["new-tool"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tools novas são bem-vindas. Pra acelerar o triagem, preencha tudo abaixo.
+
+  - type: input
+    id: name
+    attributes:
+      label: Nome proposto da tool
+      description: Use o padrão `consultar_xyz` ou `listar_xyz` em snake_case e PT.
+      placeholder: consultar_fipe
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: O que a tool faz?
+      description: Descrição em uma frase, em português, foco em quando o LLM deve chamar.
+      placeholder: Consulta o preço FIPE de um veículo a partir do código FIPE.
+    validations:
+      required: true
+
+  - type: textarea
+    id: when-to-use
+    attributes:
+      label: Quando NÃO usar?
+      description: Tão importante quanto "quando usar" — reduz alucinação do LLM.
+      placeholder: Não usar pra carros importados sem código FIPE; não usar pra preço de seguro.
+    validations:
+      required: true
+
+  - type: input
+    id: api
+    attributes:
+      label: Endpoint da BrasilAPI (ou outra fonte oficial)
+      description: URL pattern e link da doc.
+      placeholder: "GET /fipe/preco/v1/{codigoFipe}"
+    validations:
+      required: true
+
+  - type: textarea
+    id: schema
+    attributes:
+      label: Inputs esperados
+      description: Liste cada parâmetro com tipo, obrigatoriedade e exemplo.
+      placeholder: |
+        - codigoFipe (string, obrigatório): ex: "001234-5"
+        - referencia (number, opcional): mês de referência da tabela FIPE
+    validations:
+      required: true
+
+  - type: textarea
+    id: response
+    attributes:
+      label: Exemplo de resposta esperada
+      description: JSON cru de uma chamada bem-sucedida (cole de um curl da BrasilAPI).
+      render: json
+
+  - type: checkboxes
+    id: standards
+    attributes:
+      label: A tool segue os padrões do projeto?
+      description: (preenche pra você mesmo lembrar dos invariantes — ver `CONTRIBUTING.md`)
+      options:
+        - label: Schema Zod com `.describe()` em cada campo
+        - label: Validação local antes da rede (formato, ranges, etc)
+        - label: Erros 404 traduzidos em PT específico do contexto
+        - label: Retorno em JSON estruturado
+        - label: Testes mockando `fetch` (caso feliz, 404, validação local)

@@ -1,0 +1,76 @@
+name: 🐛 Bug report
+description: Reportar um bug ou comportamento inesperado em alguma tool
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar! Quanto mais detalhe, mais rápido o fix.
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Qual tool tem o bug?
+      options:
+        - consultar_cnpj
+        - consultar_cep
+        - consultar_banco
+        - listar_bancos
+        - consultar_feriados
+        - cliente HTTP / cache / retry
+        - outro (descreva abaixo)
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o comportamento observado.
+      placeholder: Ao perguntar X, a tool Y respondeu Z, mas o esperado seria...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que deveria ter acontecido?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir?
+      description: Inclua o input exato (CNPJ/CEP/etc), o cliente MCP usado (Claude Desktop, Code, Cursor) e a pergunta feita.
+      placeholder: |
+        1. Cliente: Claude Desktop v0.x
+        2. Pergunta: "Qual a razão social do CNPJ 12.345.678/0001-95?"
+        3. Resultado: ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Versão do brasil-data-mcp
+      description: Saída de `npm view brasil-data-mcp version` ou `npx -y brasil-data-mcp --version`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Versão do Node.js
+      description: Saída de `node --version`.
+      placeholder: "v20.10.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (se houver)
+      description: Output do `console.error` (no Claude Desktop, Settings → Developer → MCP logs).
+      render: shell

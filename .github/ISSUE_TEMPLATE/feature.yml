@@ -1,0 +1,51 @@
+name: ✨ Feature / melhoria
+description: Sugerir melhoria em tool existente, no cliente HTTP ou no setup
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pra sugerir uma **tool nova** (FIPE, ISBN, etc), use o template "Nova tool" — tem mais campos específicos.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema você está tentando resolver?
+      description: Foque no problema, não na solução. Isso ajuda a achar a melhor abordagem.
+      placeholder: Quando pergunto X pro Claude, ele Y. Eu queria que ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solução proposta (se você já tem uma ideia)
+      description: Opcional. Pode ser código, fluxo, ou só descrição.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas que considerou
+      description: Outras formas de resolver isso. Vale citar mesmo as que descartou.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Onde a mudança se encaixa?
+      options:
+        - tool específica (descreva no problema)
+        - cliente HTTP (cache, retry, timeout)
+        - tradução de erros
+        - DX (build, scripts, lint, testes)
+        - documentação
+        - outro
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Você gostaria de contribuir com o PR?
+      options:
+        - label: "Sim, posso enviar um PR (vou ler `CONTRIBUTING.md` antes)"
+        - label: "Não, só queria sugerir"
