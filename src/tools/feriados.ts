@@ -9,7 +9,8 @@
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { BrasilApiError, brasilApi } from "../clients/brasilapi.js";
+import { brasilApi } from "../clients/brasilapi.js";
+import { traduzirErroBrasilApi } from "../utils/errors.js";
 
 export const consultarFeriadosSchema = z.object({
   ano: z
@@ -62,20 +63,16 @@ export async function consultarFeriadosHandler(
       content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],
     };
   } catch (err) {
-    if (err instanceof BrasilApiError && err.status === 404) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Feriados de ${input.ano} não encontrados na base.`,
-          },
-        ],
-        isError: true,
-      };
-    }
-    const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text", text: `Erro ao consultar feriados: ${msg}` }],
+      content: [
+        {
+          type: "text",
+          text: traduzirErroBrasilApi(err, {
+            notFound: `Feriados de ${input.ano} não encontrados na base.`,
+            contextoErro: "Erro ao consultar feriados",
+          }),
+        },
+      ],
       isError: true,
     };
   }

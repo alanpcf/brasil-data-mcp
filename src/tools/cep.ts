@@ -8,7 +8,8 @@
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { BrasilApiError, brasilApi } from "../clients/brasilapi.js";
+import { brasilApi } from "../clients/brasilapi.js";
+import { traduzirErroBrasilApi } from "../utils/errors.js";
 
 export const consultarCepSchema = z.object({
   cep: z
@@ -68,21 +69,16 @@ export async function consultarCepHandler(
       content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],
     };
   } catch (err) {
-    if (err instanceof BrasilApiError && err.status === 404) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `CEP ${cepLimpo} não encontrado. Verifique se está correto — alguns CEPs muito específicos só existem em provedores pagos.`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text", text: `Erro ao consultar CEP: ${msg}` }],
+      content: [
+        {
+          type: "text",
+          text: traduzirErroBrasilApi(err, {
+            notFound: `CEP ${cepLimpo} não encontrado. Verifique se está correto — alguns CEPs muito específicos só existem em provedores pagos.`,
+            contextoErro: "Erro ao consultar CEP",
+          }),
+        },
+      ],
       isError: true,
     };
   }

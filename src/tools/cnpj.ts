@@ -14,7 +14,8 @@
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { BrasilApiError, brasilApi } from "../clients/brasilapi.js";
+import { brasilApi } from "../clients/brasilapi.js";
+import { traduzirErroBrasilApi } from "../utils/errors.js";
 
 export const consultarCnpjSchema = z.object({
   cnpj: z
@@ -97,21 +98,16 @@ export async function consultarCnpjHandler(
       ],
     };
   } catch (err) {
-    if (err instanceof BrasilApiError && err.status === 404) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `CNPJ ${cnpjLimpo} não encontrado na base da Receita Federal. Verifique se está correto.`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text", text: `Erro ao consultar CNPJ: ${msg}` }],
+      content: [
+        {
+          type: "text",
+          text: traduzirErroBrasilApi(err, {
+            notFound: `CNPJ ${cnpjLimpo} não encontrado na base da Receita Federal. Verifique se está correto.`,
+            contextoErro: "Erro ao consultar CNPJ",
+          }),
+        },
+      ],
       isError: true,
     };
   }

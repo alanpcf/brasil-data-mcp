@@ -13,7 +13,8 @@
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { BrasilApiError, brasilApi } from "../clients/brasilapi.js";
+import { brasilApi } from "../clients/brasilapi.js";
+import { traduzirErroBrasilApi } from "../utils/errors.js";
 
 // === consultar_banco ===
 
@@ -72,20 +73,16 @@ export async function consultarBancoHandler(
       content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],
     };
   } catch (err) {
-    if (err instanceof BrasilApiError && err.status === 404) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Banco com código ${codigo} não encontrado no cadastro do BACEN.`,
-          },
-        ],
-        isError: true,
-      };
-    }
-    const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text", text: `Erro ao consultar banco: ${msg}` }],
+      content: [
+        {
+          type: "text",
+          text: traduzirErroBrasilApi(err, {
+            notFound: `Banco com código ${codigo} não encontrado no cadastro do BACEN.`,
+            contextoErro: "Erro ao consultar banco",
+          }),
+        },
+      ],
       isError: true,
     };
   }
@@ -120,9 +117,18 @@ export async function listarBancosHandler(
       content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],
     };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text", text: `Erro ao listar bancos: ${msg}` }],
+      content: [
+        {
+          type: "text",
+          text: traduzirErroBrasilApi(err, {
+            // Não há "404" semântico pra lista — se a API errar, todos
+            // caem no mesmo balde de "indisponível".
+            notFound: "Lista de bancos não disponível no momento.",
+            contextoErro: "Erro ao listar bancos",
+          }),
+        },
+      ],
       isError: true,
     };
   }
