@@ -1,8 +1,11 @@
 # brasil-data-mcp
 
 [![npm version](https://img.shields.io/npm/v/brasil-data-mcp.svg)](https://www.npmjs.com/package/brasil-data-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/brasil-data-mcp.svg)](https://www.npmjs.com/package/brasil-data-mcp)
+[![CI](https://github.com/alanpcf/brasil-data-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/alanpcf/brasil-data-mcp/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/brasil-data-mcp.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/brasil-data-mcp.svg)](https://nodejs.org)
+[![Glama MCP server](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp/badges/score.svg)](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 
 > MCP server que expõe dados públicos brasileiros (CNPJ, CEP, bancos, feriados) como tools pra Claude Desktop, Claude Code, Cursor, Windsurf e qualquer cliente compatível com [Model Context Protocol](https://modelcontextprotocol.io).
 >
@@ -122,7 +125,7 @@ Pra apontar seu cliente MCP pro build local em vez do pacote do npm:
 
 - [x] **Fase 1** — Esqueleto + cliente HTTP + `consultar_cnpj`
 - [x] **Fase 2** — `consultar_cep`, `consultar_banco`, `listar_bancos`, `consultar_feriados` + testes Vitest
-- [ ] **Fase 3** — CI (GitHub Actions), CONTRIBUTING.md, cobertura > 80%, publicação no npm
+- [x] **Fase 3** — CI (GitHub Actions), `CONTRIBUTING.md`, cobertura 94%/85%, publicação no [npm](https://www.npmjs.com/package/brasil-data-mcp), listagem no [Glama](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 - [ ] **Fase 4** — FIPE, DDD, ISBN, taxas (SELIC/CDI/IPCA), CVM, MCP prompts pra workflows
 
 ---
