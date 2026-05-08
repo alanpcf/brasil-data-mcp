@@ -4,5 +4,6 @@ dist/
 .DS_Store
 .env
 .env.local
+.npmrc
 coverage/
 *.bak.*
