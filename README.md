@@ -17,20 +17,21 @@ Powered by [BrasilAPI](https://brasilapi.com.br) — sem chave, sem auth, dados 
 Conecte seu cliente de IA aos dados públicos brasileiros sem escrever uma linha de código. Pergunte em linguagem natural:
 
 - _"Qual a razão social do CNPJ 33.000.167/0001-01?"_
-- _"Esse CEP 01310-100 é em qual cidade?"_ _(em breve)_
-- _"Quem é o banco com código 341?"_ _(em breve)_
-- _"Quais os feriados nacionais de 2026?"_ _(em breve)_
+- _"Esse CEP 01310-100 é em qual cidade?"_
+- _"Quem é o banco com código 341?"_
+- _"Quais os feriados nacionais de 2026?"_
 
 O Claude (ou outro cliente MCP) chama a tool, retorna o JSON estruturado, e você lê a resposta em português direto na conversa.
 
 ### Tools disponíveis
 
-| Tool                | Status        | O que faz                                                                       |
-| ------------------- | ------------- | ------------------------------------------------------------------------------- |
-| `consultar_cnpj`    | ✅ Disponível | Dados cadastrais de empresa: razão social, situação, endereço, sócios, CNAE   |
-| `consultar_cep`     | 🚧 Em breve   | Endereço completo a partir de CEP (logradouro, bairro, cidade, UF)             |
-| `consultar_banco`   | 🚧 Em breve   | Nome e ISPB de banco brasileiro pelo código (ex: 341 = Itaú, 260 = Nubank)    |
-| `consultar_feriados`| 🚧 Em breve   | Feriados nacionais de um ano (datas, nome, tipo)                               |
+| Tool                  | O que faz                                                                       |
+| --------------------- | ------------------------------------------------------------------------------- |
+| `consultar_cnpj`      | Dados cadastrais de empresa: razão social, situação, endereço, sócios, CNAE     |
+| `consultar_cep`       | Endereço completo a partir de CEP (logradouro, bairro, cidade, UF, coordenadas) |
+| `consultar_banco`     | Nome e ISPB de banco brasileiro pelo código COMPE (ex: 341 = Itaú, 260 = Nubank) |
+| `listar_bancos`       | Lista completa de bancos brasileiros cadastrados no BACEN (~250 instituições)   |
+| `consultar_feriados`  | Feriados nacionais de um ano (datas, nome, tipo) — inclui Carnaval e Páscoa     |
 
 ---
 
@@ -120,7 +121,7 @@ Pra apontar seu cliente MCP pro build local em vez do pacote do npm:
 ## 🗺️ Roadmap
 
 - [x] **Fase 1** — Esqueleto + cliente HTTP + `consultar_cnpj`
-- [ ] **Fase 2** — `consultar_cep`, `consultar_banco`, `consultar_feriados` + testes Vitest
+- [x] **Fase 2** — `consultar_cep`, `consultar_banco`, `listar_bancos`, `consultar_feriados` + testes Vitest
 - [ ] **Fase 3** — CI (GitHub Actions), CONTRIBUTING.md, cobertura > 80%, publicação no npm
 - [ ] **Fase 4** — FIPE, DDD, ISBN, taxas (SELIC/CDI/IPCA), CVM, MCP prompts pra workflows
 
