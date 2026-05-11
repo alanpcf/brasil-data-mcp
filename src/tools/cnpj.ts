@@ -15,6 +15,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { brasilApi } from "../clients/brasilapi.js";
+import { limparCnpj, validarCnpj } from "../utils/cnpj.js";
 import { traduzirErroBrasilApi } from "../utils/errors.js";
 
 export const consultarCnpjSchema = z.object({
@@ -45,28 +46,6 @@ export const consultarCnpjTool = {
   ].join(" "),
   inputSchema: consultarCnpjSchema,
 };
-
-/** Remove qualquer caractere não-dígito. */
-function limparCnpj(s: string): string {
-  return s.replace(/\D/g, "");
-}
-
-/**
- * Valida formato básico do CNPJ:
- *   - exatamente 14 dígitos
- *   - não pode ser todos iguais (00000000000000, 11111111111111, ...).
- *     Esses passam no test de comprimento mas são CNPJs notórios usados em
- *     teste/sandbox e a Receita rejeita.
- *
- * Não valida dígitos verificadores aqui — a BrasilAPI já faz isso no servidor
- * e devolve 400 com mensagem clara, então duplicar a regra de DV no cliente
- * só duplica manutenção.
- */
-function validarCnpj(s: string): boolean {
-  if (!/^\d{14}$/.test(s)) return false;
-  if (/^(\d)\1{13}$/.test(s)) return false;
-  return true;
-}
 
 export async function consultarCnpjHandler(
   input: ConsultarCnpjInput,

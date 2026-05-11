@@ -6,10 +6,31 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-11
+
 ### Added
-- Issue templates (bug, feature, nova tool) e PR template em `.github/`
-- `SECURITY.md` com canal privado de disclosure
-- `CHANGELOG.md` neste formato
+- 5 novas MCP tools:
+  - `consultar_ddd` — cidades atendidas por código DDD
+  - `consultar_isbn` — metadados de livro (CBL, Mercado Editorial, Open Library, Google Books)
+  - `consultar_taxa` — valor atual de taxa econômica (SELIC, CDI, IPCA)
+  - `listar_taxas` — todas as taxas econômicas disponíveis
+  - `consultar_corretora` — dados cadastrais de corretora de valores CVM
+- **MCP Prompts** (workflows guiados) — primeira aparição no projeto:
+  - `analise-cnpj` — consulta CNPJ + análise interpretada (setor, idade, situação)
+  - `panorama-economico` — combina taxas + feriados do ano corrente
+- `src/utils/cnpj.ts` extraído pra reuso entre `consultar_cnpj` e `consultar_corretora`
+- TTL diferenciado pra taxas (1h em vez de 24h, pra refletir atualizações intradia)
+- 26 testes novos (Vitest), totalizando 59 verdes; cobertura 95% lines / 89% branches
+
+### Changed
+- Issue templates (bug, feature, nova tool) e PR template em `.github/` (já em [Unreleased] na v0.1)
+- `SECURITY.md` com canal privado de disclosure (idem)
+- `CHANGELOG.md` neste formato (idem)
+- User-Agent do cliente HTTP atualizado pra `brasil-data-mcp/0.2.0`
+
+### Notes
+- FIPE NÃO está incluída — bug upstream confirmado na BrasilAPI ([issue #805](https://github.com/BrasilAPI/BrasilAPI/issues/805), 403 estável). Será adicionada quando o upstream estabilizar.
+- `listar_corretoras` propositalmente fora do escopo: payload de ~600 itens polui contexto do LLM. Reabrir se aparecer filtro útil (UF, status).
 
 ## [0.1.0] — 2026-05-08
 
@@ -36,5 +57,6 @@ Primeiro release público no [npm](https://www.npmjs.com/package/brasil-data-mcp
 - Distribuição via `npx -y brasil-data-mcp`. Pacote: 8.7 kB compactado, 24.6 kB descompactado.
 - Idioma: código, comentários, descrições de tool e mensagens de erro em PT-BR. README bilíngue.
 
-[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.1.0

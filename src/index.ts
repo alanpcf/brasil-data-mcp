@@ -7,7 +7,8 @@
  *   2. Registra cada tool via registerTool — o SDK deriva o JSON Schema do
  *      schema Zod, então atendemos "validação dupla" (Zod runtime + JSON
  *      Schema na definição) com uma única declaração por tool.
- *   3. Conecta no StdioServerTransport e fica em loop atendendo requisições.
+ *   3. Registra prompts (workflows) via registerPrompt.
+ *   4. Conecta no StdioServerTransport e fica em loop atendendo requisições.
  *
  * REGRA CRÍTICA: nunca escrever em stdout fora do protocolo. Logs em stderr
  * via console.error. console.log corrompe o canal MCP.
@@ -20,6 +21,15 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  analiseCnpjArgsSchema,
+  analiseCnpjHandler,
+  analiseCnpjPrompt,
+} from "./prompts/analise-cnpj.js";
+import {
+  panoramaEconomicoHandler,
+  panoramaEconomicoPrompt,
+} from "./prompts/panorama-economico.js";
 import {
   consultarBancoHandler,
   consultarBancoSchema,
@@ -39,12 +49,35 @@ import {
   consultarCnpjTool,
 } from "./tools/cnpj.js";
 import {
+  consultarCorretoraHandler,
+  consultarCorretoraSchema,
+  consultarCorretoraTool,
+} from "./tools/corretoras.js";
+import {
+  consultarDddHandler,
+  consultarDddSchema,
+  consultarDddTool,
+} from "./tools/ddd.js";
+import {
   consultarFeriadosHandler,
   consultarFeriadosSchema,
   consultarFeriadosTool,
 } from "./tools/feriados.js";
+import {
+  consultarIsbnHandler,
+  consultarIsbnSchema,
+  consultarIsbnTool,
+} from "./tools/isbn.js";
+import {
+  consultarTaxaHandler,
+  consultarTaxaSchema,
+  consultarTaxaTool,
+  listarTaxasHandler,
+  listarTaxasSchema,
+  listarTaxasTool,
+} from "./tools/taxas.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 /**
  * Envolve o handler com try/catch padronizado. Erros não-tratados pela tool
@@ -121,6 +154,73 @@ export function createServer(): McpServer {
       inputSchema: consultarFeriadosSchema.shape,
     },
     wrapHandler(consultarFeriadosTool.name, consultarFeriadosHandler),
+  );
+
+  server.registerTool(
+    consultarDddTool.name,
+    {
+      description: consultarDddTool.description,
+      inputSchema: consultarDddSchema.shape,
+    },
+    wrapHandler(consultarDddTool.name, consultarDddHandler),
+  );
+
+  server.registerTool(
+    consultarIsbnTool.name,
+    {
+      description: consultarIsbnTool.description,
+      inputSchema: consultarIsbnSchema.shape,
+    },
+    wrapHandler(consultarIsbnTool.name, consultarIsbnHandler),
+  );
+
+  server.registerTool(
+    consultarTaxaTool.name,
+    {
+      description: consultarTaxaTool.description,
+      inputSchema: consultarTaxaSchema.shape,
+    },
+    wrapHandler(consultarTaxaTool.name, consultarTaxaHandler),
+  );
+
+  server.registerTool(
+    listarTaxasTool.name,
+    {
+      description: listarTaxasTool.description,
+      inputSchema: listarTaxasSchema.shape,
+    },
+    wrapHandler(listarTaxasTool.name, listarTaxasHandler),
+  );
+
+  server.registerTool(
+    consultarCorretoraTool.name,
+    {
+      description: consultarCorretoraTool.description,
+      inputSchema: consultarCorretoraSchema.shape,
+    },
+    wrapHandler(consultarCorretoraTool.name, consultarCorretoraHandler),
+  );
+
+  // Prompts (workflows guiados). Não passam por wrapHandler porque
+  // handler de prompt é síncrono no nosso uso e o SDK propaga exceções
+  // do callback como erro do request, o que é aceitável.
+  server.registerPrompt(
+    analiseCnpjPrompt.name,
+    {
+      title: analiseCnpjPrompt.title,
+      description: analiseCnpjPrompt.description,
+      argsSchema: analiseCnpjArgsSchema,
+    },
+    analiseCnpjHandler,
+  );
+
+  server.registerPrompt(
+    panoramaEconomicoPrompt.name,
+    {
+      title: panoramaEconomicoPrompt.title,
+      description: panoramaEconomicoPrompt.description,
+    },
+    panoramaEconomicoHandler,
   );
 
   return server;

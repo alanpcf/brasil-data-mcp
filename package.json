@@ -1,7 +1,7 @@
 {
   "name": "brasil-data-mcp",
-  "version": "0.1.0",
-  "description": "MCP server providing access to Brazilian public data (CNPJ, CEP, banks, holidays) via BrasilAPI. For use with Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients.",
+  "version": "0.2.0",
+  "description": "MCP server providing access to Brazilian public data (CNPJ, CEP, banks, holidays, DDD, ISBN, economic rates, CVM brokers) via BrasilAPI. Ships with MCP prompts for guided workflows. For use with Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients.",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -10,6 +10,12 @@
     "brazil",
     "cnpj",
     "cep",
+    "ddd",
+    "isbn",
+    "selic",
+    "cdi",
+    "ipca",
+    "cvm",
     "brasilapi",
     "ai-tools"
   ],
