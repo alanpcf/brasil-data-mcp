@@ -27,20 +27,15 @@ Acabei de publicar o **brasil-data-mcp** — um servidor MCP (Model Context Prot
 → `analise-cnpj` — recebe CNPJ, retorna análise interpretada (setor, idade, situação)
 → `panorama-economico` — combina taxas vigentes + próximos feriados num snapshot
 
-Como instalar no Claude Desktop:
+Como instalar (1 minuto):
 
-```json
-{
-  "mcpServers": {
-    "brasil-data": {
-      "command": "npx",
-      "args": ["-y", "brasil-data-mcp"]
-    }
-  }
-}
-```
+→ Claude Desktop: cola 4 linhas no claude_desktop_config.json
+→ Claude Code: `claude mcp add brasil-data -- npx -y brasil-data-mcp`
+→ Cursor / Windsurf: idem Claude Desktop, no .cursor/mcp.json
 
-Reinicia o Claude. Pronto. Pergunta em português natural e ele chama a tool certa.
+Passo a passo por cliente: https://github.com/alanpcf/brasil-data-mcp#-instalação--installation
+
+Reinicia o cliente. Pronto. Pergunta em português natural e ele chama a tool certa.
 
 Por baixo dos panos é a [BrasilAPI](https://brasilapi.com.br) — projeto open source que unifica dados oficiais brasileiros com cache e baixa latência. Meu papel foi traduzir isso pro protocolo MCP e empacotar as descrições em PT pra que o LLM saiba quando chamar cada tool.
 
