@@ -1,5 +1,7 @@
-# syntax=docker/dockerfile:1
 # Multi-stage build pra imagem mínima.
+# Sem diretiva '# syntax=': ela força o builder a baixar a imagem frontend
+# do Docker Hub, o que falha em builders sandboxados (ex: inspeção do
+# Glama) — e este Dockerfile não usa nenhum recurso que dependa dela.
 # Stage 1: instala deps + build (precisa devDependencies pra tsup/typescript).
 # Stage 2: runtime enxuto (só prod deps + dist).
 
