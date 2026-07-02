@@ -76,8 +76,7 @@ import {
   listarTaxasSchema,
   listarTaxasTool,
 } from "./tools/taxas.js";
-
-const VERSION = "0.2.0";
+import { VERSION } from "./version.js";
 
 /**
  * Envolve o handler com try/catch padronizado. Erros não-tratados pela tool

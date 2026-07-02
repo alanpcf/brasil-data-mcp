@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BrasilApiError, brasilApi } from "../../src/clients/brasilapi.js";
+import { VERSION } from "../../src/version.js";
 
 function fakeJson(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -94,7 +95,7 @@ describe("brasilApi.get", () => {
 
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toContain("brasil-data-mcp");
+    expect(headers["User-Agent"]).toContain(`brasil-data-mcp/${VERSION}`);
     expect(headers["Accept"]).toBe("application/json");
   });
 });

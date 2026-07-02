@@ -18,12 +18,13 @@
  * byte estranho ali quebra o protocolo.
  */
 
+import { VERSION } from "../version.js";
+
 const BASE_URL = "https://brasilapi.com.br/api";
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_RETRIES = 3;
-const USER_AGENT =
-  "brasil-data-mcp/0.2.0 (+https://github.com/alanpcf/brasil-data-mcp)";
+const USER_AGENT = `brasil-data-mcp/${VERSION} (+https://github.com/alanpcf/brasil-data-mcp)`;
 
 export class BrasilApiError extends Error {
   constructor(
