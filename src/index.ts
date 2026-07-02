@@ -51,6 +51,10 @@ import {
 } from "./tools/corretoras.js";
 import { consultarDddHandler, consultarDddTool } from "./tools/ddd.js";
 import {
+  consultarDominioBrHandler,
+  consultarDominioBrTool,
+} from "./tools/dominio.js";
+import {
   consultarFeriadosHandler,
   consultarFeriadosTool,
 } from "./tools/feriados.js";
@@ -122,6 +126,7 @@ const TOOLS: DefinicaoTool[] = [
   { tool: listarMoedasTool, handler: listarMoedasHandler },
   { tool: listarEstadosTool, handler: listarEstadosHandler },
   { tool: consultarMunicipiosTool, handler: consultarMunicipiosHandler },
+  { tool: consultarDominioBrTool, handler: consultarDominioBrHandler },
 ];
 
 export function createServer(): McpServer {
