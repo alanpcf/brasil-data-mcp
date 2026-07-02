@@ -54,6 +54,12 @@ import {
   consultarFeriadosHandler,
   consultarFeriadosTool,
 } from "./tools/feriados.js";
+import {
+  consultarMunicipiosHandler,
+  consultarMunicipiosTool,
+  listarEstadosHandler,
+  listarEstadosTool,
+} from "./tools/ibge.js";
 import { consultarIsbnHandler, consultarIsbnTool } from "./tools/isbn.js";
 import {
   consultarTaxaHandler,
@@ -114,6 +120,8 @@ const TOOLS: DefinicaoTool[] = [
   // Fase 5 (v0.3.0):
   { tool: consultarCambioTool, handler: consultarCambioHandler },
   { tool: listarMoedasTool, handler: listarMoedasHandler },
+  { tool: listarEstadosTool, handler: listarEstadosHandler },
+  { tool: consultarMunicipiosTool, handler: consultarMunicipiosHandler },
 ];
 
 export function createServer(): McpServer {
