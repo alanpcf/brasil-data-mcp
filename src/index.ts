@@ -4,7 +4,7 @@
  *
  * Boot:
  *   1. Cria um McpServer (high-level API do SDK 1.x).
- *   2. Registra cada tool via registerTool — o SDK deriva o JSON Schema do
+ *   2. Registra cada tool do array TOOLS — o SDK deriva o JSON Schema do
  *      schema Zod, então atendemos "validação dupla" (Zod runtime + JSON
  *      Schema na definição) com uma única declaração por tool.
  *   3. Registra prompts (workflows) via registerPrompt.
@@ -13,14 +13,15 @@
  * REGRA CRÍTICA: nunca escrever em stdout fora do protocolo. Logs em stderr
  * via console.error. console.log corrompe o canal MCP.
  *
- * REGISTRY: adicionar tool nova = uma chamada de registerTool. O helper
- * wrapHandler aplica o try/catch defensivo padronizado (bug numa tool não
- * derruba o server).
+ * REGISTRY: adicionar tool nova = uma entrada no array TOOLS. O loop de
+ * registro aplica o wrapHandler (try/catch defensivo padronizado — bug numa
+ * tool não derruba o server) uniformemente, sem risco de esquecer.
  */
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { z } from "zod";
 import {
   analiseCnpjArgsSchema,
   analiseCnpjHandler,
@@ -32,48 +33,26 @@ import {
 } from "./prompts/panorama-economico.js";
 import {
   consultarBancoHandler,
-  consultarBancoSchema,
   consultarBancoTool,
   listarBancosHandler,
-  listarBancosSchema,
   listarBancosTool,
 } from "./tools/banco.js";
-import {
-  consultarCepHandler,
-  consultarCepSchema,
-  consultarCepTool,
-} from "./tools/cep.js";
-import {
-  consultarCnpjHandler,
-  consultarCnpjSchema,
-  consultarCnpjTool,
-} from "./tools/cnpj.js";
+import { consultarCepHandler, consultarCepTool } from "./tools/cep.js";
+import { consultarCnpjHandler, consultarCnpjTool } from "./tools/cnpj.js";
 import {
   consultarCorretoraHandler,
-  consultarCorretoraSchema,
   consultarCorretoraTool,
 } from "./tools/corretoras.js";
-import {
-  consultarDddHandler,
-  consultarDddSchema,
-  consultarDddTool,
-} from "./tools/ddd.js";
+import { consultarDddHandler, consultarDddTool } from "./tools/ddd.js";
 import {
   consultarFeriadosHandler,
-  consultarFeriadosSchema,
   consultarFeriadosTool,
 } from "./tools/feriados.js";
-import {
-  consultarIsbnHandler,
-  consultarIsbnSchema,
-  consultarIsbnTool,
-} from "./tools/isbn.js";
+import { consultarIsbnHandler, consultarIsbnTool } from "./tools/isbn.js";
 import {
   consultarTaxaHandler,
-  consultarTaxaSchema,
   consultarTaxaTool,
   listarTaxasHandler,
-  listarTaxasSchema,
   listarTaxasTool,
 } from "./tools/taxas.js";
 import { VERSION } from "./version.js";
@@ -104,101 +83,46 @@ function wrapHandler<T>(
   };
 }
 
+interface DefinicaoTool {
+  tool: { name: string; description: string; inputSchema: z.AnyZodObject };
+  // O input é `any` de propósito na fronteira do registry: um array
+  // heterogêneo não correlaciona schema[i] ↔ handler[i] sem existential
+  // types. Cada handler segue 100% tipado no seu módulo, e o SDK valida o
+  // input contra o schema Zod ANTES de invocar o handler.
+  handler: (input: any) => Promise<CallToolResult>;
+}
+
+// Ordem de registro preservada entre releases (minimiza diff no tools/list).
+// Tools novas entram no fim.
+const TOOLS: DefinicaoTool[] = [
+  { tool: consultarCnpjTool, handler: consultarCnpjHandler },
+  { tool: consultarCepTool, handler: consultarCepHandler },
+  { tool: consultarBancoTool, handler: consultarBancoHandler },
+  { tool: listarBancosTool, handler: listarBancosHandler },
+  { tool: consultarFeriadosTool, handler: consultarFeriadosHandler },
+  { tool: consultarDddTool, handler: consultarDddHandler },
+  { tool: consultarIsbnTool, handler: consultarIsbnHandler },
+  { tool: consultarTaxaTool, handler: consultarTaxaHandler },
+  { tool: listarTaxasTool, handler: listarTaxasHandler },
+  { tool: consultarCorretoraTool, handler: consultarCorretoraHandler },
+];
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "brasil-data-mcp",
     version: VERSION,
   });
 
-  server.registerTool(
-    consultarCnpjTool.name,
-    {
-      description: consultarCnpjTool.description,
-      inputSchema: consultarCnpjSchema.shape,
-    },
-    wrapHandler(consultarCnpjTool.name, consultarCnpjHandler),
-  );
-
-  server.registerTool(
-    consultarCepTool.name,
-    {
-      description: consultarCepTool.description,
-      inputSchema: consultarCepSchema.shape,
-    },
-    wrapHandler(consultarCepTool.name, consultarCepHandler),
-  );
-
-  server.registerTool(
-    consultarBancoTool.name,
-    {
-      description: consultarBancoTool.description,
-      inputSchema: consultarBancoSchema.shape,
-    },
-    wrapHandler(consultarBancoTool.name, consultarBancoHandler),
-  );
-
-  server.registerTool(
-    listarBancosTool.name,
-    {
-      description: listarBancosTool.description,
-      inputSchema: listarBancosSchema.shape,
-    },
-    wrapHandler(listarBancosTool.name, listarBancosHandler),
-  );
-
-  server.registerTool(
-    consultarFeriadosTool.name,
-    {
-      description: consultarFeriadosTool.description,
-      inputSchema: consultarFeriadosSchema.shape,
-    },
-    wrapHandler(consultarFeriadosTool.name, consultarFeriadosHandler),
-  );
-
-  server.registerTool(
-    consultarDddTool.name,
-    {
-      description: consultarDddTool.description,
-      inputSchema: consultarDddSchema.shape,
-    },
-    wrapHandler(consultarDddTool.name, consultarDddHandler),
-  );
-
-  server.registerTool(
-    consultarIsbnTool.name,
-    {
-      description: consultarIsbnTool.description,
-      inputSchema: consultarIsbnSchema.shape,
-    },
-    wrapHandler(consultarIsbnTool.name, consultarIsbnHandler),
-  );
-
-  server.registerTool(
-    consultarTaxaTool.name,
-    {
-      description: consultarTaxaTool.description,
-      inputSchema: consultarTaxaSchema.shape,
-    },
-    wrapHandler(consultarTaxaTool.name, consultarTaxaHandler),
-  );
-
-  server.registerTool(
-    listarTaxasTool.name,
-    {
-      description: listarTaxasTool.description,
-      inputSchema: listarTaxasSchema.shape,
-    },
-    wrapHandler(listarTaxasTool.name, listarTaxasHandler),
-  );
-
-  server.registerTool(
-    consultarCorretoraTool.name,
-    {
-      description: consultarCorretoraTool.description,
-      inputSchema: consultarCorretoraSchema.shape,
-    },
-    wrapHandler(consultarCorretoraTool.name, consultarCorretoraHandler),
-  );
+  for (const { tool, handler } of TOOLS) {
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: tool.inputSchema.shape,
+      },
+      wrapHandler(tool.name, handler),
+    );
+  }
 
   // Prompts (workflows guiados). Não passam por wrapHandler porque
   // handler de prompt é síncrono no nosso uso e o SDK propaga exceções
