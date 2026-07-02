@@ -99,3 +99,75 @@ describe("brasilApi.get", () => {
     expect(headers["Accept"]).toBe("application/json");
   });
 });
+
+// Fake timers escopados a este describe: os backoffs (200/400/800ms) são
+// avançados virtualmente, sem custo real na suíte. O describe acima segue
+// com timers reais — o teste de erro de rede (1.4s) não é afetado.
+describe("brasilApi.get — retry em 5xx/429 transiente", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    brasilApi.clearCache();
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("5xx transiente: retenta com backoff e sucede na tentativa seguinte", async () => {
+    fetchMock
+      .mockImplementationOnce(() =>
+        Promise.resolve(fakeJson({ msg: "boom" }, 503)),
+      )
+      .mockImplementationOnce(() => Promise.resolve(fakeJson({ ok: 1 })));
+
+    const promessa = brasilApi.get("/x", { ttlMs: 0 });
+    await vi.advanceTimersByTimeAsync(200); // 1º backoff
+
+    await expect(promessa).resolves.toEqual({ ok: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("429 também retenta (rate limit é transiente)", async () => {
+    fetchMock
+      .mockImplementationOnce(() =>
+        Promise.resolve(fakeJson({ msg: "slow down" }, 429)),
+      )
+      .mockImplementationOnce(() => Promise.resolve(fakeJson({ ok: 1 })));
+
+    const promessa = brasilApi.get("/x", { ttlMs: 0 });
+    await vi.advanceTimersByTimeAsync(200);
+
+    await expect(promessa).resolves.toEqual({ ok: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("5xx persistente: esgota MAX_RETRIES e lança BrasilApiError com o status", async () => {
+    // mockImplementation (não mockResolvedValue): Response só permite ler
+    // o body uma vez — cada tentativa precisa de um Response fresco.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(fakeJson({ msg: "boom" }, 503)),
+    );
+
+    // Handler de rejeição anexado ANTES de avançar os timers, senão o
+    // vitest acusa unhandled rejection no meio dos backoffs.
+    const promessa = brasilApi.get("/x", { ttlMs: 0 }).then(
+      () => {
+        throw new Error("deveria ter lançado");
+      },
+      (err: unknown) => err,
+    );
+    await vi.advanceTimersByTimeAsync(1400); // 200 + 400 + 800
+
+    const err = (await promessa) as BrasilApiError;
+    expect(err).toBeInstanceOf(BrasilApiError);
+    expect(err.status).toBe(503);
+    expect(err.path).toBe("/x");
+    // 1 inicial + 3 retries (MAX_RETRIES=3) = 4 chamadas.
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+});
