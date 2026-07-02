@@ -17,7 +17,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
   - `consultar_dominio_br` — disponibilidade/status de domínio .br no registro.br (DNS, expiração, sugestões)
 - Domínio .br com `ttlMs: 0` — disponibilidade é time-sensitive, nunca é cacheada
 - Testes do caminho de retry 5xx/429 do cliente HTTP (fake timers escopados, backoff virtual sem custo real na suíte)
-- 26 testes novos (Vitest), totalizando 85 verdes; cobertura 97% lines / 93% branches
+- 27 testes novos (Vitest), totalizando 86 verdes; cobertura 97% lines / 93% branches
 
 ### Changed
 - Versão single-source: `src/version.ts` lê o `package.json` em runtime; `index.ts` e o User-Agent do cliente HTTP importam de lá (bump de release agora é em UM lugar)
