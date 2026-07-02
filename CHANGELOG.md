@@ -6,6 +6,28 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-02
+
+### Added
+- 5 novas MCP tools:
+  - `consultar_cambio` — cotação de câmbio (USD, EUR, GBP, JPY, CHF, CAD, AUD, DKK, NOK, SEK) em BRL por data, boletins PTAX/BACEN
+  - `listar_moedas` — moedas com cotação disponível
+  - `listar_estados` — as 27 UFs com código IBGE, nome, região e capital
+  - `consultar_municipios` — municípios de uma UF com código IBGE de 7 dígitos
+  - `consultar_dominio_br` — disponibilidade/status de domínio .br no registro.br (DNS, expiração, sugestões)
+- TTL dual no câmbio: 1h pra cotação de hoje (boletins intradia), 24h pra datas passadas (imutáveis); domínio .br com `ttlMs: 0` (disponibilidade nunca é cacheada)
+- Testes do caminho de retry 5xx/429 do cliente HTTP (fake timers escopados, backoff virtual sem custo real na suíte)
+- 26 testes novos (Vitest), totalizando 85 verdes; cobertura 97% lines / 93% branches
+
+### Changed
+- Versão single-source: `src/version.ts` lê o `package.json` em runtime; `index.ts` e o User-Agent do cliente HTTP importam de lá (bump de release agora é em UM lugar)
+- Registry declarativo de tools em `src/index.ts`: array `TOOLS` + loop de registro no lugar de 10 blocos `registerTool` repetidos
+
+### Notes
+- Câmbio em data sem pregão (fim de semana, feriado): a própria BrasilAPI devolve os boletins do último dia útil anterior — comportamento da API, sem fallback no cliente.
+- `consultar_dominio_br` exige sufixo `.br` na validação local: a API aceita `google.com` e responde silenciosamente sobre `google.com.br`; a validação garante que a resposta é sobre o domínio perguntado.
+- FIPE continua fora — [issue #805](https://github.com/BrasilAPI/BrasilAPI/issues/805) da BrasilAPI segue aberta (403 do upstream).
+
 ## [0.2.0] — 2026-05-11
 
 ### Added
@@ -57,6 +79,7 @@ Primeiro release público no [npm](https://www.npmjs.com/package/brasil-data-mcp
 - Distribuição via `npx -y brasil-data-mcp`. Pacote: 8.7 kB compactado, 24.6 kB descompactado.
 - Idioma: código, comentários, descrições de tool e mensagens de erro em PT-BR. README bilíngue.
 
-[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.1.0

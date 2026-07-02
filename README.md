@@ -7,9 +7,9 @@
 [![node](https://img.shields.io/node/v/brasil-data-mcp.svg)](https://nodejs.org)
 [![Glama MCP server](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp/badges/score.svg)](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 
-> MCP server que expõe dados públicos brasileiros (CNPJ, CEP, bancos, feriados, DDD, ISBN, taxas econômicas, corretoras CVM) como tools pra Claude Desktop, Claude Code, Cursor, Windsurf e qualquer cliente compatível com [Model Context Protocol](https://modelcontextprotocol.io). Inclui também **prompts MCP** (workflows guiados).
+> MCP server que expõe dados públicos brasileiros (CNPJ, CEP, bancos, feriados, DDD, ISBN, taxas econômicas, câmbio, corretoras CVM, estados e municípios IBGE, domínios .br) como tools pra Claude Desktop, Claude Code, Cursor, Windsurf e qualquer cliente compatível com [Model Context Protocol](https://modelcontextprotocol.io). Inclui também **prompts MCP** (workflows guiados).
 >
-> _MCP server exposing Brazilian public data (CNPJ, CEP, banks, holidays, area codes, ISBN, economic rates, CVM brokers) as tools for Claude Desktop, Claude Code, Cursor, Windsurf and any MCP-compatible client. Ships with MCP prompts for guided workflows._
+> _MCP server exposing Brazilian public data (CNPJ, CEP, banks, holidays, area codes, ISBN, economic rates, exchange rates, CVM brokers, IBGE states/municipalities, .br domains) as tools for Claude Desktop, Claude Code, Cursor, Windsurf and any MCP-compatible client. Ships with MCP prompts for guided workflows._
 
 Powered by [BrasilAPI](https://brasilapi.com.br) — sem chave, sem auth, dados oficiais.
 
@@ -27,10 +27,13 @@ Conecte seu cliente de IA aos dados públicos brasileiros sem escrever uma linha
 - _"Me dá o livro do ISBN 9788532530802."_
 - _"Qual a SELIC hoje?"_
 - _"A corretora de CNPJ 02.332.886/0011-78 ainda tá ativa?"_
+- _"Quanto fechou o dólar sexta-feira?"_
+- _"Quais os municípios do Acre?"_
+- _"meuprojeto.com.br tá disponível?"_
 
 O Claude (ou outro cliente MCP) chama a tool, retorna o JSON estruturado, e você lê a resposta em português direto na conversa.
 
-### Tools disponíveis (10)
+### Tools disponíveis (15)
 
 | Tool                   | O que faz                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------- |
@@ -44,6 +47,11 @@ O Claude (ou outro cliente MCP) chama a tool, retorna o JSON estruturado, e voc�
 | `consultar_taxa`       | Valor atual de taxa econômica (SELIC, CDI, IPCA) em % ao ano                       |
 | `listar_taxas`         | Panorama com todas as taxas econômicas vigentes                                    |
 | `consultar_corretora`  | Dados cadastrais de corretora de valores autorizada pela CVM (status, endereço)    |
+| `consultar_cambio`     | Cotação de câmbio (USD, EUR, +8 moedas) em BRL por data — boletins PTAX/BACEN      |
+| `listar_moedas`        | Moedas estrangeiras com cotação disponível (símbolo, nome, tipo)                   |
+| `listar_estados`       | As 27 UFs com código IBGE, nome, região e capital                                  |
+| `consultar_municipios` | Municípios de uma UF com nome e código IBGE de 7 dígitos                           |
+| `consultar_dominio_br` | Disponibilidade/status de domínio .br no registro.br (DNS, expiração, sugestões)   |
 
 ### Prompts disponíveis (2)
 
@@ -60,7 +68,7 @@ Prompts MCP são **workflows guiados** que aparecem como atalho no Claude Deskto
 
 Plug your AI client into Brazilian public data with zero code. Ask in natural language and the LLM picks the right tool, calls it, and answers you with structured data from official sources (Receita Federal, ViaCEP, BACEN, CVM, BrasilAPI).
 
-10 tools covering CNPJ, CEP, banks, holidays, area codes (DDD), ISBN, economic rates (SELIC/CDI/IPCA) and CVM brokers — plus 2 MCP prompts (`analise-cnpj`, `panorama-economico`) for guided workflows.
+15 tools covering CNPJ, CEP, banks, holidays, area codes (DDD), ISBN, economic rates (SELIC/CDI/IPCA), exchange rates (PTAX/BACEN), CVM brokers, IBGE states and municipalities, and .br domain availability — plus 2 MCP prompts (`analise-cnpj`, `panorama-economico`) for guided workflows.
 
 ---
 
@@ -145,6 +153,7 @@ Pra apontar seu cliente MCP pro build local em vez do pacote do npm:
 - [x] **Fase 2** — `consultar_cep`, `consultar_banco`, `listar_bancos`, `consultar_feriados` + testes Vitest
 - [x] **Fase 3** — CI (GitHub Actions), `CONTRIBUTING.md`, cobertura 94%/85%, publicação no [npm](https://www.npmjs.com/package/brasil-data-mcp), listagem no [Glama](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 - [x] **Fase 4 (v0.2.0)** — `consultar_ddd`, `consultar_isbn`, `consultar_taxa` + `listar_taxas`, `consultar_corretora` (CVM) + MCP prompts (`analise-cnpj`, `panorama-economico`)
+- [x] **Fase 5 (v0.3.0)** — `consultar_cambio` + `listar_moedas` (PTAX/BACEN), `listar_estados` + `consultar_municipios` (IBGE), `consultar_dominio_br` (registro.br); versão single-source; registry declarativo de tools; testes do caminho de retry
 - [ ] **Próximo** — FIPE (aguardando upstream estabilizar, [BrasilAPI#805](https://github.com/BrasilAPI/BrasilAPI/issues/805)); Trusted Publishing (npm OIDC); mais prompts conforme demanda
 
 ---
@@ -163,7 +172,7 @@ Se você é dev brasileiro e usa LLM no dia a dia, esse server é pra você.
 
 Issues e PRs muito bem-vindos. Pra adicionar uma tool nova, siga o padrão de `src/tools/cnpj.ts` (schema Zod + descrição + handler) e registre em `src/index.ts`.
 
-Guia detalhado em `CONTRIBUTING.md` _(em breve)_.
+Guia detalhado em [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ---
 
