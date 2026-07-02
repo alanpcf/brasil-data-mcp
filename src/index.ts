@@ -37,6 +37,12 @@ import {
   listarBancosHandler,
   listarBancosTool,
 } from "./tools/banco.js";
+import {
+  consultarCambioHandler,
+  consultarCambioTool,
+  listarMoedasHandler,
+  listarMoedasTool,
+} from "./tools/cambio.js";
 import { consultarCepHandler, consultarCepTool } from "./tools/cep.js";
 import { consultarCnpjHandler, consultarCnpjTool } from "./tools/cnpj.js";
 import {
@@ -105,6 +111,9 @@ const TOOLS: DefinicaoTool[] = [
   { tool: consultarTaxaTool, handler: consultarTaxaHandler },
   { tool: listarTaxasTool, handler: listarTaxasHandler },
   { tool: consultarCorretoraTool, handler: consultarCorretoraHandler },
+  // Fase 5 (v0.3.0):
+  { tool: consultarCambioTool, handler: consultarCambioHandler },
+  { tool: listarMoedasTool, handler: listarMoedasHandler },
 ];
 
 export function createServer(): McpServer {
