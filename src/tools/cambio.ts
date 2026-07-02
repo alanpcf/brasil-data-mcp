@@ -8,20 +8,23 @@
  *     intermediários, fechamento) com compra/venda em BRL
  *   - /cambio/v1/moedas                 → moedas suportadas
  *
- * Comportamento verificado da API: em data sem pregão (fim de semana,
- * feriado) ela devolve as cotações do ÚLTIMO DIA ÚTIL anterior — a resposta
- * traz data_hora_cotacao real. Por isso não há walk-back no cliente.
+ * Comportamentos verificados da API:
+ *   - Em data sem pregão (fim de semana, feriado) ela devolve as cotações do
+ *     ÚLTIMO DIA ÚTIL anterior — a resposta traz data_hora_cotacao real.
+ *     Por isso não há walk-back no cliente.
+ *   - O DIA CORRENTE não é consultável: retorna 400 NO_TODAY_DATE ("política
+ *     de cache"). Por isso o default com data omitida é ONTEM (a cotação
+ *     mais recente disponível), e data == hoje é rejeitada localmente com
+ *     explicação.
  *
- * TTL dual: cotação de HOJE usa 1h (novos boletins saem durante o dia útil);
- * datas passadas são imutáveis e usam o default de 24h do cliente.
+ * TTL: default de 24h do cliente — toda data consultável é passada, e
+ * boletim de dia encerrado é imutável.
  */
 
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { brasilApi } from "../clients/brasilapi.js";
 import { traduzirErroBrasilApi } from "../utils/errors.js";
-
-const TTL_CAMBIO_HOJE_MS = 60 * 60 * 1000; // 1h
 
 const MOEDAS_VALIDAS = new Set([
   "AUD",
@@ -45,6 +48,13 @@ function hojeSaoPaulo(): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
   }).format(new Date());
+}
+
+/** Dia anterior a uma data ISO — aritmética em UTC ao meio-dia (sem fuso). */
+function diaAnterior(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -85,7 +95,7 @@ export const consultarCambioSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Data da cotação no formato YYYY-MM-DD (aceita também DD/MM/YYYY). Se omitida, usa a data de hoje no fuso de Brasília. Em dia sem pregão (fim de semana, feriado) a API retorna as cotações do último dia útil anterior.",
+      "Data da cotação no formato YYYY-MM-DD (aceita também DD/MM/YYYY). Se omitida, usa ontem (fuso de Brasília) — a fonte não expõe o dia corrente. Em data sem pregão (fim de semana, feriado) a API retorna as cotações do último dia útil anterior.",
     ),
 });
 
@@ -96,9 +106,9 @@ export const consultarCambioTool = {
   description: [
     "Consulta a cotação de câmbio oficial de uma moeda estrangeira em relação ao Real (BRL) numa data, via boletins PTAX do Banco Central (BrasilAPI).",
     "",
-    "Retorna em JSON os boletins do dia (ABERTURA, INTERMEDIÁRIO, FECHAMENTO) com cotação de compra e venda em BRL, paridade e data_hora_cotacao. Em dia sem pregão (fim de semana, feriado) retorna os boletins do último dia útil anterior.",
+    "Retorna em JSON os boletins do dia (ABERTURA, INTERMEDIÁRIO, FECHAMENTO) com cotação de compra e venda em BRL, paridade e data_hora_cotacao. A fonte NÃO expõe o dia corrente: com data omitida a tool consulta ontem (a cotação mais recente disponível), e em data sem pregão a API retorna os boletins do último dia útil anterior.",
     "",
-    "Use quando o usuário perguntar 'quanto tá o dólar?', 'cotação do euro em 26/06', 'quanto fechou a libra sexta-feira' — qualquer pergunta sobre valor de moeda estrangeira em reais.",
+    "Use quando o usuário perguntar 'quanto tá o dólar?' (retorna a cotação mais recente, do dia útil anterior), 'cotação do euro em 26/06', 'quanto fechou a libra sexta-feira' — qualquer pergunta sobre valor de moeda estrangeira em reais.",
     "",
     "NÃO use para: criptomoedas (não está nesta API), BRL (é a moeda base), série histórica (uma data por chamada), ou moedas fora das 10 suportadas — pra descobrir as moedas disponíveis use listar_moedas.",
   ].join(" "),
@@ -123,9 +133,12 @@ export async function consultarCambioHandler(
   }
 
   const hoje = hojeSaoPaulo();
+  const ontem = diaAnterior(hoje);
   let data: string;
   if (input.data === undefined) {
-    data = hoje;
+    // A fonte não expõe o dia corrente (400 NO_TODAY_DATE) — a cotação mais
+    // recente disponível é sempre a de ontem.
+    data = ontem;
   } else {
     const normalizada = normalizarData(input.data);
     if (normalizada === null) {
@@ -133,7 +146,7 @@ export async function consultarCambioHandler(
         content: [
           {
             type: "text",
-            text: `Data inválida: '${input.data}'. Use o formato YYYY-MM-DD (ex: ${hoje}) ou DD/MM/YYYY.`,
+            text: `Data inválida: '${input.data}'. Use o formato YYYY-MM-DD (ex: ${ontem}) ou DD/MM/YYYY.`,
           },
         ],
         isError: true,
@@ -142,13 +155,14 @@ export async function consultarCambioHandler(
     data = normalizada;
   }
 
-  // Comparação lexicográfica funciona pra datas ISO.
-  if (data > hoje) {
+  // Comparação lexicográfica funciona pra datas ISO. Hoje também é
+  // rejeitado: a BrasilAPI retorna 400 NO_TODAY_DATE pro dia corrente.
+  if (data >= hoje) {
     return {
       content: [
         {
           type: "text",
-          text: `Data futura não permitida: '${data}'. A cotação só existe até hoje (${hoje}).`,
+          text: `A fonte não fornece cotação do dia corrente nem de datas futuras ('${data}'). A cotação mais recente disponível é a de ${ontem} — omita 'data' pra usá-la.`,
         },
       ],
       isError: true,
@@ -156,11 +170,10 @@ export async function consultarCambioHandler(
   }
 
   try {
-    // Hoje ainda recebe boletins novos → TTL 1h. Passado é imutável → 24h.
-    const ttlMs = data === hoje ? TTL_CAMBIO_HOJE_MS : undefined;
+    // Toda data consultável é passada (boletins encerrados, imutáveis) —
+    // TTL default de 24h do cliente.
     const dados = await brasilApi.get<unknown>(
       `/cambio/v1/cotacao/${moeda}/${data}`,
-      { ttlMs },
     );
     return {
       content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],

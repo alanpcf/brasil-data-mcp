@@ -20,6 +20,12 @@ function hojeSaoPaulo(): string {
   }).format(new Date());
 }
 
+function somarDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
@@ -77,14 +83,26 @@ describe("consultarCambioHandler", () => {
     expect(url).toContain("/cambio/v1/cotacao/USD/2026-06-26");
   });
 
-  it("usa a data de hoje em America/Sao_Paulo quando data é omitida", async () => {
+  it("usa ontem (America/Sao_Paulo) quando data é omitida — a fonte não expõe o dia corrente", async () => {
     fetchMock.mockImplementation(() => Promise.resolve(fakeResponse(COTACAO)));
 
     const r = await consultarCambioHandler({ moeda: "EUR" });
 
     expect(r.isError).toBeUndefined();
+    const ontem = somarDias(hojeSaoPaulo(), -1);
     const url = fetchMock.mock.calls[0][0] as string;
-    expect(url).toContain(`/cambio/v1/cotacao/EUR/${hojeSaoPaulo()}`);
+    expect(url).toContain(`/cambio/v1/cotacao/EUR/${ontem}`);
+  });
+
+  it("rejeita a data de hoje com explicação, sem chamar a rede", async () => {
+    const r = await consultarCambioHandler({
+      moeda: "USD",
+      data: hojeSaoPaulo(),
+    });
+
+    expect(r.isError).toBe(true);
+    expect((r.content[0] as { text: string }).text).toContain("dia corrente");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("rejeita moeda não suportada sem chamar a rede", async () => {
@@ -99,15 +117,12 @@ describe("consultarCambioHandler", () => {
 
   it("rejeita data futura sem chamar a rede", async () => {
     // Amanhã em SP: hoje + 1 dia, calculado (nunca hardcoded).
-    const hoje = hojeSaoPaulo();
-    const amanha = new Date(`${hoje}T12:00:00Z`);
-    amanha.setUTCDate(amanha.getUTCDate() + 1);
-    const dataFutura = amanha.toISOString().slice(0, 10);
+    const dataFutura = somarDias(hojeSaoPaulo(), 1);
 
     const r = await consultarCambioHandler({ moeda: "USD", data: dataFutura });
 
     expect(r.isError).toBe(true);
-    expect((r.content[0] as { text: string }).text).toContain("futura");
+    expect((r.content[0] as { text: string }).text).toContain("futuras");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

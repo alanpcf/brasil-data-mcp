@@ -15,7 +15,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
   - `listar_estados` — as 27 UFs com código IBGE, nome, região e capital
   - `consultar_municipios` — municípios de uma UF com código IBGE de 7 dígitos
   - `consultar_dominio_br` — disponibilidade/status de domínio .br no registro.br (DNS, expiração, sugestões)
-- TTL dual no câmbio: 1h pra cotação de hoje (boletins intradia), 24h pra datas passadas (imutáveis); domínio .br com `ttlMs: 0` (disponibilidade nunca é cacheada)
+- Domínio .br com `ttlMs: 0` — disponibilidade é time-sensitive, nunca é cacheada
 - Testes do caminho de retry 5xx/429 do cliente HTTP (fake timers escopados, backoff virtual sem custo real na suíte)
 - 26 testes novos (Vitest), totalizando 85 verdes; cobertura 97% lines / 93% branches
 
@@ -24,7 +24,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
 - Registry declarativo de tools em `src/index.ts`: array `TOOLS` + loop de registro no lugar de 10 blocos `registerTool` repetidos
 
 ### Notes
-- Câmbio em data sem pregão (fim de semana, feriado): a própria BrasilAPI devolve os boletins do último dia útil anterior — comportamento da API, sem fallback no cliente.
+- A fonte de câmbio NÃO expõe o dia corrente (400 `NO_TODAY_DATE`, "política de cache"): com `data` omitida a tool consulta ontem (a cotação mais recente disponível) e rejeita `data` = hoje localmente com explicação. Em data sem pregão (fim de semana, feriado) a própria BrasilAPI devolve os boletins do último dia útil anterior — sem fallback no cliente.
 - `consultar_dominio_br` exige sufixo `.br` na validação local: a API aceita `google.com` e responde silenciosamente sobre `google.com.br`; a validação garante que a resposta é sobre o domínio perguntado.
 - FIPE continua fora — [issue #805](https://github.com/BrasilAPI/BrasilAPI/issues/805) da BrasilAPI segue aberta (403 do upstream).
 
