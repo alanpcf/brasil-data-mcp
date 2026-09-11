@@ -21,7 +21,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { z } from "zod";
+import { cpfcnpjHabilitado } from "./clients/cpfcnpj.js";
 import {
   analiseCnpjArgsSchema,
   analiseCnpjHandler,
@@ -31,46 +31,7 @@ import {
   panoramaEconomicoHandler,
   panoramaEconomicoPrompt,
 } from "./prompts/panorama-economico.js";
-import {
-  consultarBancoHandler,
-  consultarBancoTool,
-  listarBancosHandler,
-  listarBancosTool,
-} from "./tools/banco.js";
-import {
-  consultarCambioHandler,
-  consultarCambioTool,
-  listarMoedasHandler,
-  listarMoedasTool,
-} from "./tools/cambio.js";
-import { consultarCepHandler, consultarCepTool } from "./tools/cep.js";
-import { consultarCnpjHandler, consultarCnpjTool } from "./tools/cnpj.js";
-import {
-  consultarCorretoraHandler,
-  consultarCorretoraTool,
-} from "./tools/corretoras.js";
-import { consultarDddHandler, consultarDddTool } from "./tools/ddd.js";
-import {
-  consultarDominioBrHandler,
-  consultarDominioBrTool,
-} from "./tools/dominio.js";
-import {
-  consultarFeriadosHandler,
-  consultarFeriadosTool,
-} from "./tools/feriados.js";
-import {
-  consultarMunicipiosHandler,
-  consultarMunicipiosTool,
-  listarEstadosHandler,
-  listarEstadosTool,
-} from "./tools/ibge.js";
-import { consultarIsbnHandler, consultarIsbnTool } from "./tools/isbn.js";
-import {
-  consultarTaxaHandler,
-  consultarTaxaTool,
-  listarTaxasHandler,
-  listarTaxasTool,
-} from "./tools/taxas.js";
+import { toolsAtivas } from "./tools/registry.js";
 import { VERSION } from "./version.js";
 
 /**
@@ -99,43 +60,20 @@ function wrapHandler<T>(
   };
 }
 
-interface DefinicaoTool {
-  tool: { name: string; description: string; inputSchema: z.AnyZodObject };
-  // O input é `any` de propósito na fronteira do registry: um array
-  // heterogêneo não correlaciona schema[i] ↔ handler[i] sem existential
-  // types. Cada handler segue 100% tipado no seu módulo, e o SDK valida o
-  // input contra o schema Zod ANTES de invocar o handler.
-  handler: (input: any) => Promise<CallToolResult>;
-}
-
-// Ordem de registro preservada entre releases (minimiza diff no tools/list).
-// Tools novas entram no fim.
-const TOOLS: DefinicaoTool[] = [
-  { tool: consultarCnpjTool, handler: consultarCnpjHandler },
-  { tool: consultarCepTool, handler: consultarCepHandler },
-  { tool: consultarBancoTool, handler: consultarBancoHandler },
-  { tool: listarBancosTool, handler: listarBancosHandler },
-  { tool: consultarFeriadosTool, handler: consultarFeriadosHandler },
-  { tool: consultarDddTool, handler: consultarDddHandler },
-  { tool: consultarIsbnTool, handler: consultarIsbnHandler },
-  { tool: consultarTaxaTool, handler: consultarTaxaHandler },
-  { tool: listarTaxasTool, handler: listarTaxasHandler },
-  { tool: consultarCorretoraTool, handler: consultarCorretoraHandler },
-  // Fase 5 (v0.3.0):
-  { tool: consultarCambioTool, handler: consultarCambioHandler },
-  { tool: listarMoedasTool, handler: listarMoedasHandler },
-  { tool: listarEstadosTool, handler: listarEstadosHandler },
-  { tool: consultarMunicipiosTool, handler: consultarMunicipiosHandler },
-  { tool: consultarDominioBrTool, handler: consultarDominioBrHandler },
-];
-
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "brasil-data-mcp",
     version: VERSION,
   });
 
-  for (const { tool, handler } of TOOLS) {
+  const habilitado = cpfcnpjHabilitado();
+  if (habilitado) {
+    console.error(
+      "[brasil-data-mcp] provedor cpfcnpj.com.br habilitado (tools premium: consultar_cpf, consultar_inscricao_estadual)",
+    );
+  }
+
+  for (const { tool, handler } of toolsAtivas(habilitado)) {
     server.registerTool(
       tool.name,
       {
