@@ -6,6 +6,20 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
 
 ## [Unreleased]
 
+### Added
+- Provedor premium OPCIONAL cpfcnpj.com.br, ligado só pela variável de ambiente `CPFCNPJ_TOKEN` (primeiro uso de `process.env` no projeto). Variáveis: `CPFCNPJ_TOKEN`, `CPFCNPJ_BASE_URL` (só `https://`, padrão `https://api.cpfcnpj.com.br`) e `CPFCNPJ_CNPJ_PACOTE` (`5` ou `6`, padrão `6`).
+- `src/clients/cpfcnpj.ts`: cliente espelhando o da BrasilAPI (cache TTL 1h por `pacote/documento` sem token na chave, retry com backoff em 5xx/429/rede e uma retentativa em `erroCodigo` 1006/1007, timeout 10s via `AbortController`). Converte o corpo de erro (`status: 0`, `erroCodigo`) em `CpfCnpjError` e remove campos operacionais (`saldo`, `consultaID`, `pacoteUsado`, `comprovantePdfBase64`) da resposta. Nenhuma mensagem, log ou chave de cache contém o token ou a URL.
+- `consultar_cpf` (requer `CPFCNPJ_TOKEN`): dados cadastrais de pessoa física na Receita Federal, com flag `completo` (pacote 1 ou 3) e aviso de LGPD na descrição.
+- `consultar_inscricao_estadual` (requer `CPFCNPJ_TOKEN`): inscrições estaduais de um CNPJ (pacote 16), com filtro opcional por UF aplicado no cliente.
+- `consultar_cnpj` passa a usar o provedor quando o token existe (com fallback automático para a BrasilAPI) e aceita CNPJ alfanumérico (IN RFB 2.229/2024); a resposta ganha o campo `fonte`.
+- Helpers `limparCnpjAlfanumerico`/`validarCnpjAlfanumerico` (sem tocar em `limparCnpj`/`validarCnpj`) e `limparCpf`/`validarCpf`, com validação de dígito verificador local para poupar crédito antes da rede.
+- `traduzirErroCpfCnpj` em `src/utils/errors.ts` mapeando os códigos da API para mensagens em PT.
+- Registro declarativo `src/tools/registry.ts` (`toolsAtivas(habilitado)`), com as tools premium entrando só quando o provedor está ligado.
+- 58 testes novos (Vitest), totalizando 144 verdes; cobertura mantida acima de 80%.
+
+### Notes
+- Sem `CPFCNPJ_TOKEN`, nada muda: as 15 tools continuam iguais, sem chave, sem auth, pela BrasilAPI. CNPJ alfanumérico sem o provedor devolve um erro amigável explicando que exige o token.
+
 ## [0.3.0] — 2026-07-02
 
 ### Added

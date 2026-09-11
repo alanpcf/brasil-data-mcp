@@ -33,7 +33,7 @@ Conecte seu cliente de IA aos dados públicos brasileiros sem escrever uma linha
 
 O Claude (ou outro cliente MCP) chama a tool, retorna o JSON estruturado, e você lê a resposta em português direto na conversa.
 
-### Tools disponíveis (15)
+### Tools disponíveis (15, + 2 com provedor premium)
 
 | Tool                   | O que faz                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------- |
@@ -52,6 +52,13 @@ O Claude (ou outro cliente MCP) chama a tool, retorna o JSON estruturado, e voc�
 | `listar_estados`       | As 27 UFs com código IBGE, nome, região e capital                                  |
 | `consultar_municipios` | Municípios de uma UF com nome e código IBGE de 7 dígitos                           |
 | `consultar_dominio_br` | Disponibilidade/status de domínio .br no registro.br (DNS, expiração, sugestões)   |
+
+Com o provedor premium opcional habilitado (variável `CPFCNPJ_TOKEN`, veja a seção abaixo):
+
+| Tool                           | O que faz                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| `consultar_cpf`                | Dados cadastrais de pessoa física por CPF na Receita Federal. Requer `CPFCNPJ_TOKEN`     |
+| `consultar_inscricao_estadual` | Inscrições estaduais (IE) de um CNPJ, com filtro opcional por UF. Requer `CPFCNPJ_TOKEN` |
 
 ### Prompts disponíveis (2)
 
@@ -119,6 +126,48 @@ Crie ou edite `.cursor/mcp.json` na raiz do projeto:
 
 ---
 
+## 🔑 Provedor premium opcional: cpfcnpj.com.br
+
+Por padrão, tudo roda pela BrasilAPI, sem chave. Se você definir a variável de ambiente `CPFCNPJ_TOKEN`, o servidor liga um provedor premium opcional (a API da [CPF.CNPJ](https://www.cpfcnpj.com.br/dev/)) e ganha três coisas:
+
+- `consultar_cnpj` passa a consultar os dados oficiais em tempo real (D+0) e aceita **CNPJ alfanumérico** (IN RFB 2.229/2024, vigência jul/2026). Se o provedor falhar, cai automaticamente de volta para a BrasilAPI; o campo `fonte` na resposta indica a origem dos dados.
+- Nova tool `consultar_cpf`: dados cadastrais de pessoa física (situação e nome, ou completo com nascimento, gênero e endereço).
+- Nova tool `consultar_inscricao_estadual`: inscrições estaduais (IE) de um CNPJ, com filtro opcional por UF.
+
+**Sem `CPFCNPJ_TOKEN`, nada muda:** as 15 tools continuam iguais, sem chave, sem auth.
+
+### Variáveis de ambiente
+
+| Variável              | Obrigatória              | Padrão                        | Uso                                                                                   |
+| --------------------- | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------- |
+| `CPFCNPJ_TOKEN`       | para ligar o provedor    | (vazio, desligado)            | token da conta em cpfcnpj.com.br                                                      |
+| `CPFCNPJ_BASE_URL`    | não                      | `https://api.cpfcnpj.com.br`  | aceita somente `https://` (o token vai no path)                                       |
+| `CPFCNPJ_CNPJ_PACOTE` | não                      | `6`                           | `5` (razão, fantasia, endereço) ou `6` (completo: QSA, situação, CNAE, porte, Simples) |
+
+### Claude Desktop com o provedor ligado
+
+```json
+{
+  "mcpServers": {
+    "brasil-data": {
+      "command": "npx",
+      "args": ["-y", "brasil-data-mcp"],
+      "env": { "CPFCNPJ_TOKEN": "seu-token" }
+    }
+  }
+}
+```
+
+No Claude Code: `claude mcp add brasil-data -e CPFCNPJ_TOKEN=seu-token -- npx -y brasil-data-mcp`.
+
+O token é obtido no painel em [cpfcnpj.com.br/dev](https://www.cpfcnpj.com.br/dev/). Cada consulta consome crédito da sua conta (o custo por consulta está na tabela de pacotes do painel). Os dados vêm das fontes oficiais em tempo real, sem bases raspadas, e o provedor mantém certificações ISO/IEC 27001, ISO/IEC 27701 e ISO 37301.
+
+### EN, optional premium provider
+
+By default everything runs through BrasilAPI, no key required. Set the `CPFCNPJ_TOKEN` environment variable to enable an optional premium provider ([CPF.CNPJ](https://www.cpfcnpj.com.br/dev/)): `consultar_cnpj` then queries official data in real time and accepts alphanumeric CNPJ (IN RFB 2.229/2024), with automatic fallback to BrasilAPI, and two new tools show up, `consultar_cpf` and `consultar_inscricao_estadual`. Without the token nothing changes. Configure it through the `env` block above and get a token at [cpfcnpj.com.br/dev](https://www.cpfcnpj.com.br/dev/). Each lookup consumes account credit; data comes from official sources in real time and the provider holds ISO/IEC 27001, ISO/IEC 27701 and ISO 37301 certifications.
+
+---
+
 ## 🛠️ Desenvolvimento / Development
 
 ```bash
@@ -154,6 +203,7 @@ Pra apontar seu cliente MCP pro build local em vez do pacote do npm:
 - [x] **Fase 3** — CI (GitHub Actions), `CONTRIBUTING.md`, cobertura 94%/85%, publicação no [npm](https://www.npmjs.com/package/brasil-data-mcp), listagem no [Glama](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 - [x] **Fase 4 (v0.2.0)** — `consultar_ddd`, `consultar_isbn`, `consultar_taxa` + `listar_taxas`, `consultar_corretora` (CVM) + MCP prompts (`analise-cnpj`, `panorama-economico`)
 - [x] **Fase 5 (v0.3.0)** — `consultar_cambio` + `listar_moedas` (PTAX/BACEN), `listar_estados` + `consultar_municipios` (IBGE), `consultar_dominio_br` (registro.br); versão single-source; registry declarativo de tools; testes do caminho de retry
+- [x] **Provedor premium opcional (opt-in):** cpfcnpj.com.br via `CPFCNPJ_TOKEN`, com CNPJ alfanumérico em `consultar_cnpj` (fallback BrasilAPI), `consultar_cpf` e `consultar_inscricao_estadual`
 - [ ] **Próximo** — FIPE (aguardando upstream estabilizar, [BrasilAPI#805](https://github.com/BrasilAPI/BrasilAPI/issues/805)); Trusted Publishing (npm OIDC); mais prompts conforme demanda
 
 ---
