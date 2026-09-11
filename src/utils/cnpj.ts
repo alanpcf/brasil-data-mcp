@@ -26,3 +26,48 @@ export function validarCnpj(s: string): boolean {
   if (/^(\d)\1{13}$/.test(s)) return false;
   return true;
 }
+
+/**
+ * Normaliza CNPJ alfanumérico (IN RFB 2.229/2024, vigência jul/2026).
+ *
+ * Diferente de limparCnpj (que usa \D e MUTILA as letras do formato novo),
+ * aqui removemos só pontuação e mantemos letras, comparando em MAIÚSCULAS
+ * como a norma exige. Usado apenas pelas tools do provedor premium; o caminho
+ * BrasilAPI continua numérico via limparCnpj.
+ */
+export function limparCnpjAlfanumerico(s: string): string {
+  return s.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+}
+
+/**
+ * Valida CNPJ alfanumérico (IN RFB 2.229/2024):
+ *   - 12 posições alfanuméricas (0-9, A-Z) + 2 dígitos verificadores numéricos;
+ *   - não pode ser uma sequência repetida;
+ *   - dígitos verificadores por módulo 11 sobre (charCode - 48).
+ *
+ * A norma mantém o numérico como subconjunto: um CNPJ só de dígitos válido
+ * (ex.: 11222333000181) também passa aqui. O DV é validado localmente para
+ * poupar crédito antes de bater no provedor (mesma justificativa do CPF).
+ */
+export function validarCnpjAlfanumerico(s: string): boolean {
+  if (!/^[0-9A-Z]{12}\d{2}$/.test(s)) return false;
+  if (/^(.)\1{13}$/.test(s)) return false;
+
+  const valor = (i: number): number => s.charCodeAt(i) - 48;
+
+  const dv = (ate: number, pesos: number[]): number => {
+    let soma = 0;
+    for (let i = 0; i < ate; i++) {
+      soma += valor(i) * (pesos[i] ?? 0);
+    }
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  const dv1 = dv(12, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  if (dv1 !== Number(s.charAt(12))) return false;
+
+  const dv2 = dv(13, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  if (dv2 !== Number(s.charAt(13))) return false;
+  return true;
+}

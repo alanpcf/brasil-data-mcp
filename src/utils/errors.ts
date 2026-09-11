@@ -12,6 +12,7 @@
  */
 
 import { BrasilApiError } from "../clients/brasilapi.js";
+import { CpfCnpjError } from "../clients/cpfcnpj.js";
 
 export interface MapeamentoErro {
   /** Mensagem específica pra 404 (recurso não existe). */
@@ -42,6 +43,65 @@ export function traduzirErroBrasilApi(
       return `${ctx}: falha de rede ao alcançar o serviço.`;
     }
     return `${ctx}: o serviço retornou erro inesperado (${err.status}).`;
+  }
+
+  const msg = err instanceof Error ? err.message : String(err);
+  return `${ctx}: ${msg}`;
+}
+
+/**
+ * Tradução dos erros do provedor cpfcnpj.com.br em mensagens em PT.
+ *
+ * A API sinaliza falha pelo corpo (`erroCodigo`), não pelo status HTTP, então
+ * traduzimos primeiro pelo código de negócio. Erros de transporte (HTTP 5xx,
+ * 429, rede) caem nas mesmas frases da BrasilAPI. Nunca vaza URL, token ou
+ * status cru pro modelo.
+ */
+export function traduzirErroCpfCnpj(
+  err: unknown,
+  mapa: MapeamentoErro,
+): string {
+  const ctx = mapa.contextoErro ?? "Erro ao consultar dados";
+
+  if (err instanceof CpfCnpjError) {
+    switch (err.codigo) {
+      case 100:
+      case 101:
+      case 200:
+      case 201:
+        return `${ctx}: documento inválido (dígito verificador ou comprimento).`;
+      case 102:
+      case 202:
+        return mapa.notFound;
+      case 103:
+        return `${ctx}: as fontes oficiais não retornaram todos os campos deste pacote. Tente o pacote básico.`;
+      case 1000:
+        return `${ctx}: token do provedor cpfcnpj.com.br inválido para este IP de origem. Confira CPFCNPJ_TOKEN e o IP cadastrado.`;
+      case 1001:
+        return `${ctx}: créditos insuficientes no pacote em cpfcnpj.com.br.`;
+      case 1002:
+      case 1003:
+        return `${ctx}: conta ou IP temporariamente bloqueados no provedor.`;
+      case 1004:
+        return `${ctx}: pacote não habilitado na conta (confira CPFCNPJ_CNPJ_PACOTE).`;
+      case 1005:
+      case 1006:
+        return `${ctx}: fonte oficial temporariamente indisponível. Tente novamente.`;
+      case 1007:
+        return `${ctx}: limite de requisições por segundo do provedor atingido. Tente novamente em instantes.`;
+    }
+
+    // Sem código de negócio conhecido: trata pelo transporte (como a BrasilAPI).
+    if (err.status === 429) {
+      return `${ctx}: limite de requisições temporariamente atingido. Tente novamente em alguns segundos.`;
+    }
+    if (err.status >= 500) {
+      return `${ctx}: serviço temporariamente indisponível. Tente novamente em alguns instantes.`;
+    }
+    if (err.status === 0) {
+      return `${ctx}: falha de rede ao alcançar o serviço.`;
+    }
+    return `${ctx}: o serviço retornou um erro inesperado.`;
   }
 
   const msg = err instanceof Error ? err.message : String(err);
