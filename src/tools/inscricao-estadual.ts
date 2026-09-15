@@ -88,6 +88,20 @@ export async function consultarInscricaoEstadualHandler(
     };
   }
 
+  // Caminho pago: valida DV antes da rede (o numérico é subconjunto do
+  // alfanumérico). Sem isso um CNPJ com 14 dígitos e DV errado gastaria crédito.
+  if (!validarCnpjAlfanumerico(cnpjAlfa)) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `CNPJ inválido: '${input.cnpj}'. Dígito verificador inválido.`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
   if (input.uf !== undefined && !/^[A-Za-z]{2}$/.test(input.uf)) {
     return {
       content: [

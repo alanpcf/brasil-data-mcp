@@ -22,10 +22,13 @@ describe("consultar_cnpj", () => {
     brasilApi.clearCache();
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    // Garante o caminho grátis mesmo se o ambiente local tiver o token.
+    vi.stubEnv("CPFCNPJ_TOKEN", "");
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("retorna JSON com dados quando o CNPJ existe", async () => {
@@ -42,6 +45,7 @@ describe("consultar_cnpj", () => {
     expect(r.content[0]).toMatchObject({ type: "text" });
     const payload = JSON.parse((r.content[0] as { text: string }).text);
     expect(payload.razao_social).toBe("PETROLEO BRASILEIRO S A PETROBRAS");
+    expect(payload.fonte).toBeUndefined();
 
     // Confirma que o fetch foi chamado com o CNPJ limpo (sem máscara).
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -245,13 +249,19 @@ describe("consultar_cnpj com provedor premium (cpfcnpj.com.br)", () => {
     expect(payload.fonte).toBe("cpfcnpj.com.br");
   });
 
-  it("alfanumérico sem token: erro amigável pedindo CPFCNPJ_TOKEN, sem fetch", async () => {
+  it("alfanumérico sem token: consulta a BrasilAPI, sem campo fonte", async () => {
     vi.stubEnv("CPFCNPJ_TOKEN", "");
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(fakeResponse({ cnpj: "12ABC34501DE35", razao_social: "ALFA LTDA" })),
+    );
 
     const r = await consultarCnpjHandler({ cnpj: "12ABC34501DE35" });
 
-    expect(r.isError).toBe(true);
-    expect((r.content[0] as { text: string }).text).toContain("CPFCNPJ_TOKEN");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(r.isError).toBeUndefined();
+    const payload = JSON.parse((r.content[0] as { text: string }).text);
+    expect(payload.razao_social).toBe("ALFA LTDA");
+    expect(payload.fonte).toBeUndefined();
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("/cnpj/v1/12ABC34501DE35");
   });
 });

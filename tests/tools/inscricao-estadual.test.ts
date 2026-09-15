@@ -95,6 +95,16 @@ describe("consultar_inscricao_estadual", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("rejeita CNPJ numérico com DV errado sem chamar a rede", async () => {
+    const r = await consultarInscricaoEstadualHandler({ cnpj: "11222333000199" });
+
+    expect(r.isError).toBe(true);
+    expect((r.content[0] as { text: string }).text).toContain(
+      "Dígito verificador inválido",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("rejeita UF malformada sem chamar a rede", async () => {
     const r = await consultarInscricaoEstadualHandler({
       cnpj: "11222333000181",

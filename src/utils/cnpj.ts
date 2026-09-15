@@ -32,8 +32,8 @@ export function validarCnpj(s: string): boolean {
  *
  * Diferente de limparCnpj (que usa \D e MUTILA as letras do formato novo),
  * aqui removemos só pontuação e mantemos letras, comparando em MAIÚSCULAS
- * como a norma exige. Usado apenas pelas tools do provedor premium; o caminho
- * BrasilAPI continua numérico via limparCnpj.
+ * como a norma exige. A BrasilAPI já aceita o formato; usamos estes helpers
+ * no caminho grátis (alfa) e no provedor premium.
  */
 export function limparCnpjAlfanumerico(s: string): string {
   return s.replace(/[^0-9A-Za-z]/g, "").toUpperCase();

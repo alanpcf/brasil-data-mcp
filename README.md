@@ -130,7 +130,7 @@ Crie ou edite `.cursor/mcp.json` na raiz do projeto:
 
 Por padrão, tudo roda pela BrasilAPI, sem chave. Se você definir a variável de ambiente `CPFCNPJ_TOKEN`, o servidor liga um provedor premium opcional (a API da [CPF.CNPJ](https://www.cpfcnpj.com.br/dev/)) e ganha três coisas:
 
-- `consultar_cnpj` passa a consultar os dados oficiais em tempo real (D+0) e aceita **CNPJ alfanumérico** (IN RFB 2.229/2024, vigência jul/2026). Se o provedor falhar, cai automaticamente de volta para a BrasilAPI; o campo `fonte` na resposta indica a origem dos dados.
+- `consultar_cnpj` passa a consultar os dados oficiais em tempo real (D+0). Se o provedor falhar, cai automaticamente de volta para a BrasilAPI; o campo `fonte` na resposta indica a origem. CNPJ alfanumérico (IN RFB 2.229/2024) já funciona sem token, via BrasilAPI.
 - Nova tool `consultar_cpf`: dados cadastrais de pessoa física (situação e nome, ou completo com nascimento, gênero e endereço).
 - Nova tool `consultar_inscricao_estadual`: inscrições estaduais (IE) de um CNPJ, com filtro opcional por UF.
 
@@ -164,7 +164,7 @@ O token é obtido no painel em [cpfcnpj.com.br/dev](https://www.cpfcnpj.com.br/d
 
 ### EN, optional premium provider
 
-By default everything runs through BrasilAPI, no key required. Set the `CPFCNPJ_TOKEN` environment variable to enable an optional premium provider ([CPF.CNPJ](https://www.cpfcnpj.com.br/dev/)): `consultar_cnpj` then queries official data in real time and accepts alphanumeric CNPJ (IN RFB 2.229/2024), with automatic fallback to BrasilAPI, and two new tools show up, `consultar_cpf` and `consultar_inscricao_estadual`. Without the token nothing changes. Configure it through the `env` block above and get a token at [cpfcnpj.com.br/dev](https://www.cpfcnpj.com.br/dev/). Each lookup consumes account credit; data comes from official sources in real time and the provider holds ISO/IEC 27001, ISO/IEC 27701 and ISO 37301 certifications.
+By default everything runs through BrasilAPI, no key required (including alphanumeric CNPJ). Set the `CPFCNPJ_TOKEN` environment variable to enable an optional premium provider ([CPF.CNPJ](https://www.cpfcnpj.com.br/dev/)): `consultar_cnpj` then queries official data in real time, with automatic fallback to BrasilAPI, and two new tools show up, `consultar_cpf` and `consultar_inscricao_estadual`. Without the token the existing JSON contract is unchanged. Configure it through the `env` block above and get a token at [cpfcnpj.com.br/dev](https://www.cpfcnpj.com.br/dev/). Each lookup consumes account credit; data comes from official sources in real time and the provider holds ISO/IEC 27001, ISO/IEC 27701 and ISO 37301 certifications.
 
 ---
 

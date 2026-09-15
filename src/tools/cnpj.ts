@@ -36,7 +36,7 @@ export const consultarCnpjSchema = z.object({
   cnpj: z
     .string()
     .describe(
-      "CNPJ da empresa, com ou sem máscara. Aceita numérico ('12.345.678/0001-90' ou '12345678000190') e, com o provedor premium habilitado, também o formato alfanumérico da IN RFB 2.229/2024 (ex.: '12ABC34501DE35').",
+      "CNPJ da empresa, com ou sem máscara. Aceita numérico ('12.345.678/0001-90' ou '12345678000190') e alfanumérico da IN RFB 2.229/2024 (ex.: '12ABC34501DE35').",
     ),
 });
 
@@ -55,10 +55,11 @@ export const consultarCnpjTool = {
     "",
     "Use quando o usuário pedir informações sobre uma empresa identificada por CNPJ.",
     "",
-    "Fonte: BrasilAPI por padrão (sem chave). Se a variável de ambiente CPFCNPJ_TOKEN estiver definida, ",
-    "usa o provedor premium cpfcnpj.com.br (dados oficiais em tempo real, pacote configurável) e cai para a ",
-    "BrasilAPI se o provedor falhar. Só com o provedor a tool aceita CNPJ alfanumérico (IN RFB 2.229/2024). ",
-    "O campo 'fonte' na resposta indica a origem dos dados.",
+    "Fonte: BrasilAPI por padrão (sem chave), inclusive CNPJ alfanumérico (IN RFB 2.229/2024). ",
+    "Se a variável de ambiente CPFCNPJ_TOKEN estiver definida, usa o provedor premium cpfcnpj.com.br ",
+    "(dados oficiais em tempo real, pacote configurável) e cai para a BrasilAPI se o provedor falhar; ",
+    "aí o campo 'fonte' na resposta indica a origem. Sem o token a resposta é o JSON cru da BrasilAPI, ",
+    "igual às versões anteriores.",
     "",
     "NÃO use para: CPF (pessoa física), empresas estrangeiras, ou validação local de formato ",
     "(rejeite formato inválido sem chamar a tool). Aceita CNPJ com ou sem máscara.",
@@ -96,19 +97,26 @@ function respostaComFonte(
 
 /** Consulta a BrasilAPI (caminho padrão, sem chave). */
 async function consultarViaBrasilApi(
-  cnpjNumerico: string,
-  avisoProvedor?: string,
+  cnpj: string,
+  extras?: { marcarFonte?: boolean; avisoProvedor?: string },
 ): Promise<CallToolResult> {
   try {
-    const dados = await brasilApi.get<unknown>(`/cnpj/v1/${cnpjNumerico}`);
-    return respostaComFonte(dados, "BrasilAPI", avisoProvedor);
+    const dados = await brasilApi.get<unknown>(`/cnpj/v1/${cnpj}`);
+    // Sem token: JSON cru, contrato idêntico ao 0.3.0. `fonte` só entra no
+    // caminho premium (sucesso pago ou fallback depois de falha do provedor).
+    if (extras?.marcarFonte || extras?.avisoProvedor) {
+      return respostaComFonte(dados, "BrasilAPI", extras.avisoProvedor);
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(dados, null, 2) }],
+    };
   } catch (err) {
     return {
       content: [
         {
           type: "text",
           text: traduzirErroBrasilApi(err, {
-            notFound: `CNPJ ${cnpjNumerico} não encontrado na base da Receita Federal. Verifique se está correto.`,
+            notFound: `CNPJ ${cnpj} não encontrado na base da Receita Federal. Verifique se está correto.`,
             contextoErro: "Erro ao consultar CNPJ",
           }),
         },
@@ -126,22 +134,14 @@ export async function consultarCnpjHandler(
   const ehNumerico = validarCnpj(cnpjNumerico);
   const ehAlfanumerico = !ehNumerico && validarCnpjAlfanumerico(cnpjAlfa);
 
-  // Sem o provedor premium, o comportamento é exatamente o de hoje: BrasilAPI
-  // numérica. Um CNPJ alfanumérico não tem como ser consultado ali.
+  // Sem o provedor premium: BrasilAPI, JSON cru. Numérico e alfanumérico
+  // (a BrasilAPI já documenta o padrão da IN RFB 2.229/2024).
   if (!cpfcnpjHabilitado()) {
     if (ehNumerico) {
       return consultarViaBrasilApi(cnpjNumerico);
     }
     if (ehAlfanumerico) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `CNPJ alfanumérico detectado ('${input.cnpj}', IN RFB 2.229/2024). A BrasilAPI consulta apenas CNPJ numérico. Para consultar CNPJ alfanumérico, habilite o provedor premium definindo a variável de ambiente CPFCNPJ_TOKEN.`,
-          },
-        ],
-        isError: true,
-      };
+      return consultarViaBrasilApi(cnpjAlfa);
     }
     return {
       content: [
@@ -160,7 +160,6 @@ export async function consultarCnpjHandler(
   // como subconjunto. Um DV errado devolve erro amigável, sem rede e sem
   // cobrança no provedor.
   const documento = cnpjAlfa;
-  const soDigitos = /^\d{14}$/.test(documento);
   const formatoOk =
     /^[0-9A-Z]{12}\d{2}$/.test(documento) && !/^(.)\1{13}$/.test(documento);
 
@@ -195,36 +194,24 @@ export async function consultarCnpjHandler(
     );
     return respostaComFonte(dados, "cpfcnpj.com.br");
   } catch (err) {
-    // CNPJ numérico: cai pra BrasilAPI. Alfanumérico não tem fallback possível.
-    if (soDigitos) {
-      console.error(
-        "[brasil-data-mcp] provedor cpfcnpj.com.br falhou em consultar_cnpj; caindo para a BrasilAPI.",
-      );
-      // Erro PERMANENTE de conta (1000 a 1004: token/IP, créditos, conta ou IP
-      // bloqueados, pacote indisponível): o operador precisa saber, senão acha
-      // que o provedor está ativo. Vai no JSON como aviso_provedor. Erros
-      // transitórios (rede, 5xx, 1005 a 1007) ficam só no stderr.
-      const codigo = err instanceof CpfCnpjError ? err.codigo : 0;
-      const avisoProvedor =
-        codigo >= 1000 && codigo <= 1004
-          ? traduzirErroCpfCnpj(err, {
-              notFound: "recurso não localizado no provedor.",
-              contextoErro: "Provedor cpfcnpj.com.br indisponível",
-            })
-          : undefined;
-      return consultarViaBrasilApi(documento, avisoProvedor);
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: traduzirErroCpfCnpj(err, {
-            notFound: `CNPJ ${documento} válido, porém não localizado nas bases da Receita Federal.`,
-            contextoErro: "Erro ao consultar CNPJ",
-          }),
-        },
-      ],
-      isError: true,
-    };
+    console.error(
+      "[brasil-data-mcp] provedor cpfcnpj.com.br falhou em consultar_cnpj; caindo para a BrasilAPI.",
+    );
+    // Erro PERMANENTE de conta (1000 a 1004: token/IP, créditos, conta ou IP
+    // bloqueados, pacote indisponível): o operador precisa saber, senão acha
+    // que o provedor está ativo. Vai no JSON como aviso_provedor. Erros
+    // transitórios (rede, 5xx, 1005 a 1007) ficam só no stderr.
+    const codigo = err instanceof CpfCnpjError ? err.codigo : 0;
+    const avisoProvedor =
+      codigo >= 1000 && codigo <= 1004
+        ? traduzirErroCpfCnpj(err, {
+            notFound: "recurso não localizado no provedor.",
+            contextoErro: "Provedor cpfcnpj.com.br indisponível",
+          })
+        : undefined;
+    return consultarViaBrasilApi(documento, {
+      marcarFonte: true,
+      avisoProvedor,
+    });
   }
 }
