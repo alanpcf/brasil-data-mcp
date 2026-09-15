@@ -6,8 +6,8 @@ A versão atual do `brasil-data-mcp` recebe correções de segurança. Versões 
 
 | Versão | Suporte |
 | ------ | ------- |
-| 0.1.x  | ✅      |
-| < 0.1  | ❌      |
+| 0.4.x  | ✅      |
+| < 0.4  | ❌      |
 
 Após o release 1.0, manteremos suporte ao último major + minor anterior por 90 dias.
 
