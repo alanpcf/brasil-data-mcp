@@ -38,12 +38,12 @@ Inclua:
 Vulnerabilidades de interesse:
 
 - Injeção / RCE no servidor MCP
-- Vazamento de dados de outros usuários (não aplicável hoje — o servidor é stateless e não retém PII)
+- Vazamento de dados de outros usuários (o servidor é stateless por processo; com `CPFCNPJ_TOKEN`, o cache em memória pode reter CPF/CNPJ por até 1h no processo local)
 - Manipulação de respostas pra induzir o LLM a tomar ação errada (prompt injection via dados retornados pela BrasilAPI)
 - Bypass do canal MCP (escrita em `stdout` corrompendo protocolo)
 
 Fora de escopo:
 
-- Vulnerabilidades nas APIs upstream (Receita Federal, BACEN, ViaCEP, BrasilAPI) — reporte diretamente à fonte.
+- Vulnerabilidades nas APIs upstream (Receita Federal, BACEN, ViaCEP, BrasilAPI, cpfcnpj.com.br) — reporte diretamente à fonte.
 - Disponibilidade de dados públicos brasileiros (cabeu à BrasilAPI/upstream).
 - Ataques que exigem acesso físico à máquina do usuário.
