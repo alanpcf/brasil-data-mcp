@@ -6,6 +6,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e es
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-15
+
 ### Added
 - Provedor premium OPCIONAL cpfcnpj.com.br, ligado só pela variável de ambiente `CPFCNPJ_TOKEN` (primeiro uso de `process.env` no projeto). Variáveis: `CPFCNPJ_TOKEN`, `CPFCNPJ_BASE_URL` (só `https://`, padrão `https://api.cpfcnpj.com.br`) e `CPFCNPJ_CNPJ_PACOTE` (`5` ou `6`, padrão `6`).
 - `src/clients/cpfcnpj.ts`: cliente espelhando o da BrasilAPI (cache TTL 1h por `pacote/documento` sem token na chave, retry com backoff em 5xx/429/rede e uma retentativa em `erroCodigo` 1006/1007, timeout 10s via `AbortController`). Converte o corpo de erro (`status: 0`, `erroCodigo`) em `CpfCnpjError` e remove campos operacionais (`saldo`, `consultaID`, `pacoteUsado`, `comprovantePdfBase64`) da resposta. Nenhuma mensagem, log ou chave de cache contém o token ou a URL.
@@ -93,7 +95,8 @@ Primeiro release público no [npm](https://www.npmjs.com/package/brasil-data-mcp
 - Distribuição via `npx -y brasil-data-mcp`. Pacote: 8.7 kB compactado, 24.6 kB descompactado.
 - Idioma: código, comentários, descrições de tool e mensagens de erro em PT-BR. README bilíngue.
 
-[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/alanpcf/brasil-data-mcp/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.4.0
 [0.3.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alanpcf/brasil-data-mcp/releases/tag/v0.1.0

@@ -1,7 +1,7 @@
 {
   "name": "brasil-data-mcp",
-  "version": "0.3.0",
-  "description": "MCP server providing access to Brazilian public data (CNPJ, CEP, banks, holidays, DDD, ISBN, economic rates, exchange rates, CVM brokers, IBGE states/municipalities, .br domains) via BrasilAPI. Ships with MCP prompts for guided workflows. For use with Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients.",
+  "version": "0.4.0",
+  "description": "MCP server providing access to Brazilian public data (CNPJ, CEP, banks, holidays, DDD, ISBN, economic rates, exchange rates, CVM brokers, IBGE states/municipalities, .br domains) via BrasilAPI. Optional premium CPF and state tax ID lookups. Ships with MCP prompts for guided workflows. For use with Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients.",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -19,6 +19,7 @@
     "ibge",
     "registro-br",
     "cvm",
+    "cpf",
     "brasilapi",
     "ai-tools"
   ],

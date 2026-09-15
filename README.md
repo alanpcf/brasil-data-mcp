@@ -203,7 +203,7 @@ Pra apontar seu cliente MCP pro build local em vez do pacote do npm:
 - [x] **Fase 3** — CI (GitHub Actions), `CONTRIBUTING.md`, cobertura 94%/85%, publicação no [npm](https://www.npmjs.com/package/brasil-data-mcp), listagem no [Glama](https://glama.ai/mcp/servers/alanpcf/brasil-data-mcp)
 - [x] **Fase 4 (v0.2.0)** — `consultar_ddd`, `consultar_isbn`, `consultar_taxa` + `listar_taxas`, `consultar_corretora` (CVM) + MCP prompts (`analise-cnpj`, `panorama-economico`)
 - [x] **Fase 5 (v0.3.0)** — `consultar_cambio` + `listar_moedas` (PTAX/BACEN), `listar_estados` + `consultar_municipios` (IBGE), `consultar_dominio_br` (registro.br); versão single-source; registry declarativo de tools; testes do caminho de retry
-- [x] **Provedor premium opcional (opt-in):** cpfcnpj.com.br via `CPFCNPJ_TOKEN`, com CNPJ alfanumérico em `consultar_cnpj` (fallback BrasilAPI), `consultar_cpf` e `consultar_inscricao_estadual`
+- [x] **v0.4.0** — provedor premium opcional cpfcnpj.com.br via `CPFCNPJ_TOKEN`: `consultar_cpf`, `consultar_inscricao_estadual`; `consultar_cnpj` em D+0 com token (fallback BrasilAPI); CNPJ alfanumérico na BrasilAPI sem token
 - [ ] **Próximo** — FIPE (aguardando upstream estabilizar, [BrasilAPI#805](https://github.com/BrasilAPI/BrasilAPI/issues/805)); Trusted Publishing (npm OIDC); mais prompts conforme demanda
 
 ---
